@@ -9,22 +9,30 @@ typedef struct Car {
 
 void drawCar(Display *display, Window window, GC gc, int screen, Car car) {
 
-        Window childWindow = XCreateSimpleWindow(display, window,
-            car.xPosition, car.yPosition, 200, 100, 1, WhitePixel(display, screen), 
-            WhitePixel(display, screen));
+        // Window childWindow = XCreateSimpleWindow(display, window,
+        //     car.xPosition, car.yPosition, 200, 100, 1, WhitePixel(display, screen), 
+        //     WhitePixel(display, screen));
         
-        XSelectInput(display, childWindow, ExposureMask);
+        // XSelectInput(display, childWindow, ExposureMask);
 
-        XMapWindow(display, childWindow);
+        // XMapWindow(display, childWindow);
         
-        XDrawRectangle(display, childWindow, gc, 30, 70, 120, 30);
+        int x = car.xPosition;
+        int y = car.yPosition;
 
-        XDrawRectangle(display, childWindow, gc, 50, 50, 50, 20);
+        // XDrawRectangle(display, window, gc, 30, 70, 120, 30);
 
-        XDrawArc(display, childWindow, gc, 50-(30/2), 100-(30/2), 30, 30, 0, 360*64);
+        // XDrawRectangle(display, window, gc, 50, 50, 50, 20);
 
-        XDrawArc(display, childWindow, gc, 120-(30/2), 100-(30/2), 30, 30, 0, 360*64);
-}
+        // XDrawArc(display, window, gc, 50-(30/2), 100-(30/2), 30, 30, 0, 360*64);
+
+        // XDrawArc(display, window, gc, 120-(30/2), 100-(30/2), 30, 30, 0, 360*64);
+
+        XDrawRectangle(display, window, gc, x, y, 120, 30);
+        XDrawRectangle(display, window, gc, x + 20, y - 20, 50, 20);
+        XDrawArc(display, window, gc, (x + 20) - (30 / 2), (y + 30) - (30 / 2), 30, 30, 0, 360*64);
+        XDrawArc(display, window, gc, (x + 90) - (30 / 2), (y + 30) - (30 / 2), 30, 30, 0, 360*64);
+    }
 
 int main (int argc, char *argv[]) {
 
@@ -55,7 +63,7 @@ int main (int argc, char *argv[]) {
         100, 100, 500, 500, 1, BlackPixel(display, screen), 
         WhitePixel(display, screen));
 
-    XSelectInput(display, window, ExposureMask);
+    XSelectInput(display, window, ExposureMask | ButtonPressMask);
 
     XMapWindow(display, window);
 
@@ -82,12 +90,12 @@ int main (int argc, char *argv[]) {
     XSetFillStyle(display, gc, FillSolid);
 
     XSetLineAttributes(display, gc, 2, LineSolid, CapRound, JoinRound);
-
+    
     while (1) {
+        //drawCar(display, window, gc, screen, car);
 
         XNextEvent(display, &event);
         
-        drawCar(display, window, gc, screen, car);
 
         // XDrawRectangle(display, window, gc, 30, 70, 120, 30);
 
@@ -100,13 +108,15 @@ int main (int argc, char *argv[]) {
 
         // }
 
-        // if (event.type == ButtonPress && event.xbutton.button == 1) {
+         if (event.type == ButtonPress && event.xbutton.button == 1) {
+            XClearWindow(display, window);
+            car.xPosition++;
+            drawCar(display, window, gc, screen, car);
+        }
 
-        // }
+         if (event.type == ButtonRelease && event.xbutton.button == 1) {
 
-        // if (event.type == ButtonRelease && event.xbutton.button == 1) {
-
-        // }
+        }
     }
 
     return 0;
