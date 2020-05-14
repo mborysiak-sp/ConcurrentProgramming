@@ -2,10 +2,53 @@
 #include <stdlib.h>
 #include <X11/Xlib.h>
 
+typedef struct Position {
+    unsigned int x;
+    unsigned int y;
+} Position;
+
 typedef struct Car {
-    unsigned int xPosition;
-    unsigned int yPosition;
+    unsigned int x;
+    unsigned int y;
 } Car;
+
+Position getMousePosition(XEvent xEvent) {
+
+    Position position;
+
+    position.x = xEvent.xmotion.x;
+    position.y = xEvent.xmotion.y;
+
+    return position;
+}
+//to powinien byc raczej wspolbiezny proces
+void moveCar(Display *display, Window window, GC gc, int screen, Car car, Position position) {
+
+    int xDifference, yDifference;
+
+    while (car.x != position.x && car.y != position.y) {
+
+        xDifference = position.x - car.x;
+
+        yDifference = position.y - car.y;
+
+        if (xDifference > 0) {
+
+            car.x++;
+        } else {
+
+            car.x--;
+        }
+
+        if (yDifference > 0) {
+
+            car.y++;
+        } else {
+
+            car.y--;
+        }
+    }
+}
 
 void drawCar(Display *display, Window window, GC gc, int screen, Car car) {
 
@@ -16,9 +59,9 @@ void drawCar(Display *display, Window window, GC gc, int screen, Car car) {
         // XSelectInput(display, childWindow, ExposureMask);
 
         // XMapWindow(display, childWindow);
-        
-        int x = car.xPosition;
-        int y = car.yPosition;
+
+        int x = car.x;
+        int y = car.y;
 
         // XDrawRectangle(display, window, gc, 30, 70, 120, 30);
 
@@ -63,11 +106,11 @@ int main (int argc, char *argv[]) {
         100, 100, 500, 500, 1, BlackPixel(display, screen), 
         WhitePixel(display, screen));
 
-    XSelectInput(display, window, ExposureMask | ButtonPressMask);
+    XSelectInput(display, window, ExposureMask | PointerMotionMask | ButtonPressMask);
 
     XMapWindow(display, window);
 
-    XEvent event;
+    XEvent xEvent;
 
     XGCValues values;
 
@@ -91,12 +134,34 @@ int main (int argc, char *argv[]) {
 
     XSetLineAttributes(display, gc, 2, LineSolid, CapRound, JoinRound);
     
+    Position position;
+
+    // XGrabPointer(display, window, False, PointerMotionMask, GrabModeAsync,
+    //     GrabModeAsync, None, None, CurrentTime);
+
     while (1) {
         //drawCar(display, window, gc, screen, car);
 
-        XNextEvent(display, &event);
-        
+        XNextEvent(display, &xEvent);
 
+        XClearWindow(display, window);
+
+        switch (xEvent.type) {
+            case Expose:
+                //drawCar(display, window, gc, screen, car);
+                break;
+            case MotionNotify:
+
+                position = getMousePosition(xEvent);
+
+                car.x = position.x;
+                car.y = position.y;
+
+                drawCar(display, window, gc, screen, car);
+                break;
+            default:
+                break;
+        }
         // XDrawRectangle(display, window, gc, 30, 70, 120, 30);
 
         // XDrawRectangle(display, window, gc, 50, 50, 50, 20);
@@ -108,15 +173,11 @@ int main (int argc, char *argv[]) {
 
         // }
 
-         if (event.type == ButtonPress && event.xbutton.button == 1) {
-            XClearWindow(display, window);
-            car.xPosition++;
-            drawCar(display, window, gc, screen, car);
-        }
-
-         if (event.type == ButtonRelease && event.xbutton.button == 1) {
-
-        }
+        //  if (xEvent.type == ButtonPress && event.xbutton.button == 1) {
+        //     XClearWindow(display, window);
+        //     car.x++;
+        //     drawCar(display, window, gc, screen, car);
+        // }
     }
 
     return 0;
