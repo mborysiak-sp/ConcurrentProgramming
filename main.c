@@ -3,6 +3,7 @@
 #include <X11/Xlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <signal.h>
 #include <sys/shm.h>
 
 
@@ -206,15 +207,23 @@ void initSharedMemory()
     if((playersID = shmget(SHARED_KEY, 1024, 0666 | IPC_CREAT | IPC_EXCL)) != -1)
     {
         initPlayers();
+        printf("KUPA");
     }
     else
     {
         addPlayer();
-
+        printf("DUPA");
         playersID = shmget(SHARED_KEY, 1024, 0666 | IPC_CREAT);
     }
 
     players = shmat(playersID, 0, 0);
+}
+
+void clearSharedMemory()
+{
+    shmctl(playersID, IPC_RMID, 0);
+
+    exit(0);
 }
 
 void eventLoop()
@@ -248,18 +257,16 @@ void eventLoop()
 
 int main (int argc, char *argv[])
 {
-    initPlayers();
+    signal(SIGINT, clearSharedMemory);
 
-    // Player player = {1, {10, 10}};
+    initSharedMemory();
     
-    // addPlayer(player);
-
-    // printf("%d", players[0].id);
-
     initDisplay();
 
     eventLoop();
 
+    clearSharedMemory();
+    
     return 0;
 }
 
