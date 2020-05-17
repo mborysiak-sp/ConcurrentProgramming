@@ -3,6 +3,8 @@
 #include <X11/Xlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <sys/shm.h>
+
 
 #define SHARED_KEY 2137
 
@@ -37,19 +39,27 @@ Position car;
 //SHARED GLOBAL VARIABLES
 Player* players;
 
+int playersID;
+
 int playerCount;
 
+
+//FUNCTIONS
 void initPlayers()
 {
     playerCount = 0;
+
+    addPlayer();
 }
 
-void addPlayer(Player player)
+void addPlayer()
 {
     Player* temp = malloc((playerCount + 1) * sizeof(Player));
 
     memcpy(temp, players, playerCount * sizeof(Player));
 
+    Player player = {playerCount, {0, 0}};
+    
     temp[playerCount] = player;
 
     players = temp;
@@ -193,7 +203,18 @@ void initDisplay()
 
 void initSharedMemory()
 {
-    //if (())
+    if((playersID = shmget(SHARED_KEY, 1024, 0666 | IPC_CREAT | IPC_EXCL)) != -1)
+    {
+        initPlayers();
+    }
+    else
+    {
+        addPlayer();
+
+        playersID = shmget(SHARED_KEY, 1024, 0666 | IPC_CREAT);
+    }
+
+    players = shmat(playersID, 0, 0);
 }
 
 void eventLoop()
