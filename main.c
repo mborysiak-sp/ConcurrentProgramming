@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <X11/Xlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 #define SHARED_KEY 2137
 
@@ -11,10 +12,11 @@ typedef struct Position
     unsigned int y;
 } Position;
 
-typedef struct Car
+typedef struct Player
 {
+    unsigned int id;
     Position position;
-} Car;
+} Player;
 
 //GLOBAL VARIABLES
 Display *display;
@@ -29,8 +31,50 @@ XEvent xEvent;
 
 XGCValues values;
 
-Car car;
+Position car;
 
+
+//SHARED GLOBAL VARIABLES
+Player* players;
+
+int playerCount;
+
+void initPlayers()
+{
+    playerCount = 0;
+}
+
+void addPlayer(Player player)
+{
+    Player* temp = malloc((playerCount + 1) * sizeof(Player));
+
+    memcpy(temp, players, playerCount * sizeof(Player));
+
+    temp[playerCount] = player;
+
+    players = temp;
+
+    playerCount++;
+}
+
+void removePlayer(int id)
+{
+    Player* temp = malloc((playerCount - 1) * sizeof(Player));
+
+    if (id != 0)
+    {
+        memcpy(temp, players, id * sizeof(Player));
+    }
+
+    if (id != (playerCount - 1))
+    {
+        memcpy(temp + id, players + id + 1, (playerCount - id - 1) * sizeof(Player));
+    }
+
+    players = temp;
+
+    playerCount--;
+}
 
 Position positionDifference(Position a, Position b)
 {
@@ -62,41 +106,41 @@ Position getMousePosition(XEvent xEvent)
     return position;
 }
 
-void moveCar(Display *display, Window window, GC gc, int screen, Car car, Position position)
+void moveCar(Position position)
 {
 
-    while (comparePositions(car.position, position))
+    while (comparePositions(car, position))
     {
         
         Position difference;
         
-        difference = positionDifference(car.position, position);
+        difference = positionDifference(car, position);
 
         if (difference.x > 0)
         {
-            car.position.x++;
+            car.x++;
         } 
         else
         {
-            car.position.x--;
+            car.x--;
         }
 
         if (difference.y > 0)
         {
-            car.position.y++;
+            car.y++;
         } 
         else
         {
-            car.position.y--;
+            car.y--;
         }
     }
 }
 
-void drawCar(Car car)
+void drawCar(Position car)
 {
-        int x = car.position.x;
+        int x = car.x;
        
-        int y = car.position.y;
+        int y = car.y;
 
         
         XDrawRectangle(display, window, gc, x, y, 120, 30);
@@ -108,7 +152,7 @@ void drawCar(Car car)
         XDrawArc(display, window, gc, (x + 90) - (30 / 2), (y + 30) - (30 / 2), 30, 30, 0, 360*64);
 }
 
-void init_display()
+void initDisplay()
 {
     display = XOpenDisplay(NULL);
 
@@ -147,6 +191,11 @@ void init_display()
 
 }
 
+void initSharedMemory()
+{
+    //if (())
+}
+
 void eventLoop()
 {
     Position position;
@@ -165,7 +214,7 @@ void eventLoop()
             case MotionNotify:
                 position = getMousePosition(xEvent);
 
-                car.position = position;
+                car = position;
 
                 drawCar(car);
 
@@ -178,7 +227,15 @@ void eventLoop()
 
 int main (int argc, char *argv[])
 {
-    init_display();
+    initPlayers();
+
+    // Player player = {1, {10, 10}};
+    
+    // addPlayer(player);
+
+    // printf("%d", players[0].id);
+
+    initDisplay();
 
     eventLoop();
 
