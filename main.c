@@ -6,6 +6,11 @@
 #include <signal.h>
 #include <sys/shm.h>
 
+//WAZNE!!!
+//CO DO WYLICZANIA KOORDYNATOW: SUMUJESZ WSZYSTKIE X I Y
+//I DZIELISZ JE PRZEZ ICH ILOSC WYLICZAJAC SREDNI PUNKT
+//MOZE NIE DZIALAC, ALE SPROBUJ
+
 
 #define SHARED_KEY 2137
 
@@ -145,6 +150,28 @@ void moveCar(Position position)
             car.y--;
         }
     }
+}
+
+Position calculateDestination()
+{
+    Position destination;
+    
+    int sumX, sumY;
+
+    for (int i = 0; i < playerCount; i++)
+    {
+        Position playerPosition = players[i].position;
+        sumX += playerPosition.x;
+        sumY += playerPosition.y;
+    }
+
+    sumX /= playerCount;
+    sumY /= playerCount;
+
+    destination.x = sumX;
+    destination.y = sumY;
+    
+    return destination;
 }
 
 void drawCar(Position car)
